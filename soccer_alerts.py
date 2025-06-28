@@ -15,27 +15,22 @@ known_users = {
     'Eriksen', 'Sané', 'Alonso', 'Godin', 'Kimmich', 'de Ligt', 'Varane', 'Marquinhos', 'Fernandinho', 'Laporte'
 }
 
-# Ensure alerts folder exists for output files
+# Ensure alerts folder exists for logs
 os.makedirs('alerts', exist_ok=True)
 
-# File paths for login attempts log and lockout info
+# Path for login attempts and lockout tracking
 log_file_path = "alerts/login_attempts.txt"
 lockout_file = "alerts/lockout.json"
 
-# Load lockout info if exists, else initialize empty
+# Load or initialize lockout data
 if os.path.exists(lockout_file):
     with open(lockout_file, "r") as f:
         lockout_data = json.load(f)
 else:
     lockout_data = {}
 
-def save_lockouts():
-    # Save lockout data to JSON file
-    with open(lockout_file, "w") as f:
-        json.dump(lockout_data, f)
-
 def load_attempts():
-    # Load past login attempts from log file
+    """Load login attempts from log file."""
     attempts = {}
     if os.path.exists(log_file_path):
         with open(log_file_path, "r") as f:
@@ -49,12 +44,17 @@ def load_attempts():
     return attempts
 
 def log_attempt(status, username):
-    # Append a new login attempt with status to the log file
+    """Log a login attempt."""
     with open(log_file_path, "a") as f:
         f.write(f"{datetime.datetime.now().isoformat()} | {status} | {username}\n")
 
+def save_lockouts():
+    """Save lockout info to file."""
+    with open(lockout_file, "w") as f:
+        json.dump(lockout_data, f)
+
 def process_login_file(uploaded_file):
-    # Process uploaded CSV file with login records and generate alerts
+    """Process uploaded CSV file for soccer login alerts."""
     failed_attempts = {}
     attempt_times = {}
 
@@ -63,7 +63,6 @@ def process_login_file(uploaded_file):
     reader = csv.DictReader(f)
     rows = list(reader)
 
-    # Count failed login attempts and their timestamps per user
     for row in rows:
         username = row['username']
         success = row['success'].lower()
@@ -72,7 +71,7 @@ def process_login_file(uploaded_file):
             failed_attempts[username] = failed_attempts.get(username, 0) + 1
             attempt_times.setdefault(username, []).append(timestamp)
 
-    # Write general alerts for early logins, unknown users, and repeated failures
+    # Write general alerts
     with open('alerts/alerts.txt', 'w') as alert_file:
         for row in rows:
             username = row['username']
@@ -90,13 +89,12 @@ def process_login_file(uploaded_file):
             elif is_unknown:
                 alert_file.write(f"Alert: Unknown user {username} logged in at {dt.strftime('%Y-%m-%d %H:%M')}\n")
 
-        # Alert if user had 3 or more failed login attempts
         for user, count in failed_attempts.items():
             if count >= 3:
                 timestamps = ', '.join(attempt_times[user])
                 alert_file.write(f"Alert: {user} had {count} failed login attempts at these times: {timestamps}\n")
 
-    # Write alerts related to private IP addresses
+    # Private IP alerts
     with open('alerts/private_ip_alerts.txt', 'w') as alert_file:
         for row in rows:
             username = row['username']
@@ -109,7 +107,6 @@ def process_login_file(uploaded_file):
                 hour = dt.hour
 
                 if ip_obj.is_private:
-                    # Mark private IP usage during odd hours as suspicious
                     if username in known_users and (hour < 8 or hour >= 20):
                         alert_file.write(f"Suspicious: {username} used private IP {ip_str} at {timestamp_str} (odd hour)\n")
                     elif username in known_users:
@@ -117,15 +114,12 @@ def process_login_file(uploaded_file):
                     else:
                         alert_file.write(f"Alert: Unknown user {username} used private IP {ip_str} at {timestamp_str}\n")
             except ValueError:
-                # Ignore invalid IP addresses
                 continue
 
-    # Load blacklisted IPs from file (supports IP or CIDR)
+    # Blacklisted IP alerts
     try:
         with open('ip_blacklist.txt', 'r') as file:
-            blacklisted_ips = set(
-                line.strip() for line in file if line.strip() and not line.startswith('#')
-            )
+            blacklisted_ips = set(line.strip() for line in file if line.strip() and not line.startswith('#'))
     except FileNotFoundError:
         blacklisted_ips = set()
 
@@ -137,7 +131,6 @@ def process_login_file(uploaded_file):
         except ValueError:
             continue
 
-    # Write alerts for logins from blacklisted IPs
     with open('alerts/blacklist_alerts.txt', 'w') as alert_file:
         for row in rows:
             ip_raw = row.get('ip')
@@ -159,12 +152,12 @@ def process_login_file(uploaded_file):
 
 st.title("Soccer Login Monitor")
 
-# Upload and analyze login CSV file
+# File uploader for CSV login logs
 uploaded_file = st.file_uploader("Upload soccer_logins.csv file", type=['csv'])
 
 if uploaded_file is not None:
     process_login_file(uploaded_file)
-    st.success("Alerts generated and saved in alerts/ folder.")
+    st.success("Alerts have been generated and saved in the alerts/ folder.")
 
     def show_alerts(title, filepath):
         st.subheader(title)
@@ -182,27 +175,29 @@ if uploaded_file is not None:
     show_alerts("Private IP Alerts", 'alerts/private_ip_alerts.txt')
     show_alerts("Blacklisted IP Alerts", 'alerts/blacklist_alerts.txt')
 
-# Login simulation UI
-st.header("Login Simulation (All logins will fail)")
+# Login Simulation UI
 
-st.write("Enter a username and password. After 3 failed attempts, the user will be locked out for 30 minutes.")
+st.header("Login Simulation")
+
+st.write("Enter username and password to simulate login attempts.")
 
 username = st.text_input("Username")
 password = st.text_input("Password", type="password")
 
-now = datetime.datetime.now()
-user_attempts = load_attempts().get(username, []) if username else []
-failures = [t for t, s in user_attempts if s == "failed"]
-
-locked_until = lockout_data.get(username) if username else None
-locked_until_dt = datetime.datetime.fromisoformat(locked_until) if locked_until else None
-
 if username:
-    if locked_until_dt and locked_until_dt > now:
-        st.error(f"Locked out until {locked_until_dt.strftime('%Y-%m-%d %H:%M:%S')}")
+    now = datetime.datetime.now()
+    user_attempts = load_attempts().get(username, [])
+    failures = [t for t, s in user_attempts if s == "failed"]
+
+    # Check if user is locked out
+    locked_until = lockout_data.get(username)
+    if locked_until and datetime.datetime.fromisoformat(locked_until) > now:
+        st.error(f"Your account is locked until {locked_until}")
     else:
         if st.button("Login"):
+            # Log a failed login attempt (simulate all logins failing)
             log_attempt("failed", username)
+
             if len(failures) + 1 >= 3:
                 lock_until_time = now + datetime.timedelta(minutes=30)
                 lockout_data[username] = lock_until_time.isoformat()
@@ -211,7 +206,7 @@ if username:
             else:
                 st.error("Login failed.")
 
-# Display login attempts log
+# Show login attempts log
 st.subheader("Login Attempts Log")
 if os.path.exists(log_file_path):
     with open(log_file_path, "r") as f:
