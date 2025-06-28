@@ -1,0 +1,16 @@
+🚫 ALERT: Neymar logged in from blacklisted IP 102.140.97.134 at 2025-05-30T02:50:00
+🚫 ALERT: Salah logged in from blacklisted IP 103.48.192.48 at 2025-05-31T11:15:45
+🚫 ALERT: Kane logged in from blacklisted IP 103.149.27.228 at 2025-05-31T13:45:30
+🚫 ALERT: Dybala logged in from blacklisted IP 103.182.132.154 at 2025-06-01T14:20:05
+🚫 ALERT: Rashford logged in from blacklisted IP 107.172.252.183 at 2025-06-03T06:05:10
+🚫 ALERT: Son logged in from blacklisted IP 111.67.202.85 at 2025-06-04T19:40:30
+🚫 ALERT: Modric logged in from blacklisted IP 107.0.200.227 at 2025-06-05T22:25:55
+🚫 ALERT: Haaland logged in from blacklisted IP 116.172.130.191 at 2025-06-06T02:15:15
+🚫 ALERT: Mane logged in from blacklisted IP 119.60.2.236 at 2025-06-08T08:35:15
+🚫 ALERT: Mahrez logged in from blacklisted IP 115.91.91.182 at 2025-06-10T14:55:00
+🚫 ALERT: Neymar logged in from blacklisted IP 102.140.97.134 at 2025-06-17T08:00:00
+🚫 ALERT: Neymar logged in from blacklisted IP 102.140.97.134 at 2025-06-17T09:15:00
+🚫 ALERT: Salah logged in from blacklisted IP 103.48.192.48 at 2025-06-17T10:25:00
+🚫 ALERT: Salah logged in from blacklisted IP 103.48.192.48 at 2025-06-17T11:40:00
+🚫 ALERT: Haaland logged in from blacklisted IP 116.172.130.191 at 2025-06-17T12:55:00
+🚫 ALERT: Haaland logged in from blacklisted IP 116.172.130.191 at 2025-06-17T14:05:00
